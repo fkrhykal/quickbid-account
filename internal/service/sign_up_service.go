@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/fkrhykal/quickbid-account/internal/credential"
 	"github.com/fkrhykal/quickbid-account/internal/data"
 	"github.com/fkrhykal/quickbid-account/internal/dto"
 	"github.com/fkrhykal/quickbid-account/internal/entity"
@@ -19,6 +20,7 @@ func SignUpService[T any](
 	execManager data.ExecutorManager[T],
 	saveUser repository.SaveUser[T],
 	findUserByUsername repository.FindUserByUsername[T],
+	passwordHasher credential.PasswordHasher,
 ) usecase.SignUp {
 	return func(ctx context.Context, req *dto.SignUpRequest) (*dto.SignUpResponse, error) {
 		log.DebugContext(ctx, "Starting sign-up process")
@@ -43,10 +45,17 @@ func SignUpService[T any](
 		}
 		log.DebugContext(ctx, "Username is available, proceeding with user creation")
 
+		hashedPassword, err := passwordHasher.Hash(req.Password)
+		if err != nil {
+			log.DebugContext(ctx, "Password hashing failed", slog.Any("error", err))
+			return nil, err
+		}
+		log.DebugContext(ctx, "password hashing success")
+
 		user := &entity.User{
 			ID:       uuid.New(),
 			Username: req.Username,
-			Password: req.Password,
+			Password: hashedPassword,
 		}
 
 		if err := saveUser(ctx, executor, user); err != nil {

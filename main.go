@@ -27,7 +27,7 @@ func main() {
 	postgresConfig := db.PostgresDevConfig
 
 	if env := os.Getenv("ENV"); env == "production" {
-		postgresConfig = db.PostgresProdConfig
+		postgresConfig = db.PostgresProdConfig(logger)
 	}
 
 	pgDB, err := db.SetupPostgresDB(config.Configure(

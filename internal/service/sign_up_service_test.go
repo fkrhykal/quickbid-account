@@ -7,11 +7,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fkrhykal/quickbid-account/internal/credential"
 	"github.com/fkrhykal/quickbid-account/internal/data"
 	"github.com/fkrhykal/quickbid-account/internal/dto"
 	"github.com/fkrhykal/quickbid-account/internal/entity"
 	"github.com/fkrhykal/quickbid-account/internal/service"
 	"github.com/fkrhykal/quickbid-account/internal/usecase"
+	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,26 +37,55 @@ func TestSignUp(t *testing.T) {
 		ctx := context.Background()
 
 		execManager := data.NewMockExecutorManager[any](t)
-		signUp := service.SignUpService(log, defaultValidate, execManager, defaultSave, defaultFindByUsername)
+		passwordHasher := credential.NewMockPasswordHasher(t)
+
+		signUp := service.SignUpService(
+			log,
+			defaultValidate,
+			execManager,
+			defaultSave,
+			defaultFindByUsername,
+			passwordHasher,
+		)
+
+		req := &dto.SignUpRequest{
+			Username: faker.Username(),
+			Password: faker.Password(),
+		}
 
 		execManager.EXPECT().Executor().Return(nil)
+		passwordHasher.EXPECT().Hash(req.Password).Return(req.Password, nil)
 
-		_, err := signUp(ctx, &dto.SignUpRequest{})
+		_, err := signUp(ctx, req)
 		assert.NoError(t, err)
 	})
 
 	t.Run("case validation failed", func(t *testing.T) {
 		ctx := context.Background()
-		validationError := errors.New("request invalid")
 
+		validationError := errors.New("request invalid")
 		validationFailed := func(ctx context.Context, req *dto.SignUpRequest) error {
 			return validationError
 		}
 
 		execManager := data.NewMockExecutorManager[any](t)
-		signUp := service.SignUpService(log, validationFailed, execManager, defaultSave, defaultFindByUsername)
+		passwordHasher := credential.NewMockPasswordHasher(t)
 
-		_, err := signUp(ctx, &dto.SignUpRequest{})
+		signUp := service.SignUpService(
+			log,
+			validationFailed,
+			execManager,
+			defaultSave,
+			defaultFindByUsername,
+			passwordHasher,
+		)
+
+		req := &dto.SignUpRequest{
+			Username: faker.Username(),
+			Password: faker.Password(),
+		}
+
+		_, err := signUp(ctx, req)
 		assert.ErrorIs(t, validationError, err)
 	})
 
@@ -66,13 +97,20 @@ func TestSignUp(t *testing.T) {
 		}
 
 		execManager := data.NewMockExecutorManager[any](t)
-		signUp := service.SignUpService(log, defaultValidate, execManager, defaultSave, usernameUsed)
+		passwordHasher := credential.NewMockPasswordHasher(t)
+		signUp := service.SignUpService(
+			log,
+			defaultValidate,
+			execManager,
+			defaultSave,
+			usernameUsed,
+			passwordHasher,
+		)
 
 		execManager.EXPECT().Executor().Return(nil)
 
 		_, err := signUp(ctx, &dto.SignUpRequest{})
 		assert.ErrorIs(t, usecase.ErrUsernameAlreadyUsed, err)
-
 	})
 
 	t.Run("case saving user failed", func(t *testing.T) {
@@ -84,11 +122,26 @@ func TestSignUp(t *testing.T) {
 		}
 
 		execManager := data.NewMockExecutorManager[any](t)
-		signUp := service.SignUpService(log, defaultValidate, execManager, saveFailed, defaultFindByUsername)
+		passwordHasher := credential.NewMockPasswordHasher(t)
+
+		signUp := service.SignUpService(
+			log,
+			defaultValidate,
+			execManager,
+			saveFailed,
+			defaultFindByUsername,
+			passwordHasher,
+		)
+
+		req := &dto.SignUpRequest{
+			Username: faker.Username(),
+			Password: faker.Password(),
+		}
 
 		execManager.EXPECT().Executor().Return(nil)
+		passwordHasher.EXPECT().Hash(req.Password).Return(req.Password, nil)
 
-		_, err := signUp(ctx, &dto.SignUpRequest{})
+		_, err := signUp(ctx, req)
 		assert.ErrorIs(t, saveError, err)
 	})
 }

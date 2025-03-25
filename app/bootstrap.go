@@ -8,6 +8,7 @@ import (
 	"github.com/fkrhykal/quickbid-account/api/route"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
+	"github.com/fkrhykal/quickbid-account/internal/credential"
 	"github.com/fkrhykal/quickbid-account/internal/service"
 	"github.com/fkrhykal/quickbid-account/internal/validation"
 	"github.com/gofiber/fiber/v2"
@@ -21,17 +22,19 @@ type BootstrapConfig struct {
 
 func Bootstrap(config *BootstrapConfig) {
 	execManager := db.NewSqlExecutorManager(config.DB)
+	passwordManager := credential.NewBcryptPasswordManager(config.Logger)
 
 	signUpService := service.SignUpService(
-		config.Logger.WithGroup("SignUpService"),
+		config.Logger,
 		validation.ValidateSignUpRequest,
 		execManager,
-		persistence.PgSaveUser(config.Logger.WithGroup("PgSaveUser")),
-		persistence.PgFindUserByUsername(config.Logger.WithGroup("PgFindUserByUsername")),
+		persistence.PgSaveUser(config.Logger),
+		persistence.PgFindUserByUsername(config.Logger),
+		passwordManager,
 	)
 
 	signUpHandler := handler.SignUpHandler(
-		config.Logger.WithGroup("SignUpHandler"),
+		config.Logger,
 		signUpService,
 	)
 

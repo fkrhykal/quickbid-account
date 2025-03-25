@@ -14,6 +14,7 @@ import (
 	"github.com/fkrhykal/quickbid-account/api/route"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
+	"github.com/fkrhykal/quickbid-account/internal/credential"
 	"github.com/fkrhykal/quickbid-account/internal/entity"
 	"github.com/fkrhykal/quickbid-account/internal/service"
 	"github.com/fkrhykal/quickbid-account/internal/validation"
@@ -41,6 +42,7 @@ func TestSignUp(t *testing.T) {
 	execManager := db.NewSqlExecutorManager(pgDB)
 	saveUser := persistence.PgSaveUser(log)
 	findUserByUsername := persistence.PgFindUserByUsername(log)
+	passwordManager := credential.NewBcryptPasswordManager(log)
 
 	route.SignUpRoute(app, handler.SignUpHandler(
 		log,
@@ -50,6 +52,7 @@ func TestSignUp(t *testing.T) {
 			execManager,
 			saveUser,
 			findUserByUsername,
+			passwordManager,
 		),
 	))
 
@@ -59,8 +62,6 @@ func TestSignUp(t *testing.T) {
 			"password": "ncsdfnc&8_A1",
 		})
 		assert.NoError(t, err)
-
-		t.Log(string(requestBody))
 
 		httpRequest, err := http.NewRequest(http.MethodPost, "/sign-up", bytes.NewBuffer(requestBody))
 		assert.NoError(t, err)
