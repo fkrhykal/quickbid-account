@@ -8,13 +8,15 @@ Welcome to the QuickBid Account API. This API enables seamless account managemen
 
 Registers a new user.
 
-**Endpoint:**
+#### Request
 
 ```
-POST /sign-up
+POST /api/v1/sign-up
 ```
 
-**Request Body:**
+```
+Content-Type: application/json
+```
 
 ```json
 {
@@ -23,55 +25,53 @@ POST /sign-up
 }
 ```
 
-**Response:**
+#### Success Response
 
-```json
+```
 HTTP/1.1 201 Created
 Content-Type: application/json
+```
 
+```json
 {
   "id": "string"
 }
 ```
 
-#### Sign Up Error Handling
+#### Error Response
 
-- `400 Bad Request` – Invalid or missing input
-- `409 Conflict` – Username already exists
-- `500 Internal Server Error` – Server-side error
+##### `400 Bad Request`
 
-### Sign In
-
-Authenticates an existing user and returns an access token.
-
-**Endpoint:**
-
-```
-POST /sign-in
-```
-
-**Request Body:**
+Invalid or missing input
 
 ```json
 {
-  "username": "string",
-  "password": "string"
+  "code": 400,
+  "error": {
+    "username": "string",
+    "password": "string"
+  }
 }
 ```
 
-**Response:**
+##### `409 Conflict`
+
+Username already used
 
 ```json
-HTTP/1.1 200 OK
-Content-Type: application/json
-
 {
-  "token": "string"
+  "code": 409,
+  "error": "username already used"
 }
 ```
 
-#### Sign In Error Handling
+##### `500 Internal Server Error`
 
-- `400 Bad Request` – Invalid or missing input
-- `401 Unauthorized` – Incorrect username or password
-- `500 Internal Server Error` – Server-side error
+Unexpected server error
+
+```json
+{
+  "code": 500,
+  "error": "Internal Server Error"
+}
+```

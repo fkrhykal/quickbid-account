@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  quickbid_account_devdb:
+    container_name: quickbid_account_devdb
+    image: postgres:17.2-alpine3.21
+    ports:
+      - '5430:5432'
+    environment:
+      POSTGRES_USER: quickbid
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: account_db
+  quickbid_account_testdb:
+    container_name: quickbid_account_testdb
+    image: postgres:17.2-alpine3.21
+    ports:
+      - '5431:5432'
+    environment:
+      POSTGRES_USER: quickbid
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: account_db

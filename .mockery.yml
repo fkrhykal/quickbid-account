@@ -1,0 +1,11 @@
+with-expecter: True
+packages:
+  github.com/fkrhykal/quickbid-account/internal/data:
+    interfaces:
+      ExecutorManager:
+      TxExecutor:
+filename: 'mock_{{.InterfaceName}}.go'
+dir: '{{.InterfaceDir}}'
+mockname: 'Mock{{.InterfaceName}}'
+outpkg: '{{.PackageName}}'
+inpackage: True
