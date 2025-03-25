@@ -4,6 +4,12 @@ packages:
     interfaces:
       ExecutorManager:
       TxExecutor:
+  github.com/fkrhykal/quickbid-account/internal/credential:
+    interfaces:
+      PasswordHasher:
+      PasswordVerifier:
+      CredentialTokenCreator:
+      UserCredentialRetriever:
 filename: 'mock_{{.InterfaceName}}.go'
 dir: '{{.InterfaceDir}}'
 mockname: 'Mock{{.InterfaceName}}'
