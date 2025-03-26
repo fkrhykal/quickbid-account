@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/fkrhykal/quickbid-account/config"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
 	"github.com/fkrhykal/quickbid-account/internal/entity"
@@ -15,7 +16,7 @@ import (
 func TestSaveUser(t *testing.T) {
 	ctx := context.Background()
 
-	pgDB, err := db.SetupPostgresDB(db.PostgresTestConfig)
+	pgDB, err := db.SetupPostgresDB(config.PostgresTestConfig)
 	assert.NoError(t, err)
 
 	defer func() {
@@ -25,7 +26,7 @@ func TestSaveUser(t *testing.T) {
 
 	execManager := db.NewSqlExecutorManager(pgDB)
 
-	saveUser := persistence.PgSaveUser(db.PostgresTestConfig.Logger)
+	saveUser := persistence.PgSaveUser(config.PostgresTestConfig.Logger)
 
 	user := &entity.User{
 		ID:       uuid.New(),
@@ -40,7 +41,7 @@ func TestSaveUser(t *testing.T) {
 func TestFindUserByUsername(t *testing.T) {
 	ctx := context.Background()
 
-	pgDB, err := db.SetupPostgresDB(db.PostgresTestConfig)
+	pgDB, err := db.SetupPostgresDB(config.PostgresTestConfig)
 	assert.NoError(t, err)
 
 	defer func() {
@@ -50,7 +51,7 @@ func TestFindUserByUsername(t *testing.T) {
 
 	execManager := db.NewSqlExecutorManager(pgDB)
 
-	saveUser := persistence.PgSaveUser(db.PostgresTestConfig.Logger)
+	saveUser := persistence.PgSaveUser(config.PostgresTestConfig.Logger)
 
 	user := &entity.User{
 		ID:       uuid.New(),
@@ -61,7 +62,7 @@ func TestFindUserByUsername(t *testing.T) {
 	err = saveUser(ctx, execManager.Executor(), user)
 	assert.NoError(t, err)
 
-	findByUsername := persistence.PgFindUserByUsername(db.PostgresTestConfig.Logger)
+	findByUsername := persistence.PgFindUserByUsername(config.PostgresTestConfig.Logger)
 
 	savedUser, err := findByUsername(ctx, execManager.Executor(), user.Username)
 	assert.NoError(t, err)

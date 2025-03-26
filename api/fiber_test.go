@@ -12,6 +12,7 @@ import (
 	"github.com/fkrhykal/quickbid-account/api"
 	"github.com/fkrhykal/quickbid-account/api/handler"
 	"github.com/fkrhykal/quickbid-account/api/route"
+	"github.com/fkrhykal/quickbid-account/config"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
 	"github.com/fkrhykal/quickbid-account/internal/credential"
@@ -31,13 +32,13 @@ func TestSignUp(t *testing.T) {
 
 	app := api.NewFiberApp(log)
 
-	pgDB, err := db.SetupPostgresDB(db.PostgresTestConfig)
+	pgDB, err := db.SetupPostgresDB(config.PostgresTestConfig)
 	assert.NoError(t, err)
 
-	defer func() {
+	t.Cleanup(func() {
 		pgDB.Exec("TRUNCATE TABLE users")
 		pgDB.Close()
-	}()
+	})
 
 	execManager := db.NewSqlExecutorManager(pgDB)
 	saveUser := persistence.PgSaveUser(log)
@@ -133,5 +134,138 @@ func TestSignUp(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, httpResponse.StatusCode, fiber.StatusConflict)
+	})
+}
+
+func TestSignIn(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	app := api.NewFiberApp(log)
+
+	pgDB, err := db.SetupPostgresDB(config.PostgresTestConfig)
+	assert.NoError(t, err)
+
+	t.Cleanup(func() {
+		pgDB.Exec("TRUNCATE TABLE users")
+		pgDB.Close()
+	})
+
+	execManager := db.NewSqlExecutorManager(pgDB)
+	findUserByUsername := persistence.PgFindUserByUsername(log)
+	saveUser := persistence.PgSaveUser(log)
+	passwordManager := credential.NewBcryptPasswordManager(log)
+	credentialManager := credential.NewJwtCredentialManager(&credential.JwtCredentialManagerConfig{
+		Logger:    log,
+		SecretKey: []byte("test"),
+	})
+
+	route.SignInRoute(app, handler.SignInHandler(
+		log,
+		service.SignInService(
+			log,
+			validation.ValidateSignInRequest,
+			execManager,
+			findUserByUsername,
+			passwordManager,
+			credentialManager,
+		),
+	))
+
+	t.Run("sign in success", func(t *testing.T) {
+		ctx := context.Background()
+		password := "ncsdfnc&8_A1"
+		hashedPassword, err := passwordManager.Hash(password)
+		assert.NoError(t, err)
+		user := &entity.User{
+			ID:       uuid.New(),
+			Username: faker.Username(),
+			Password: hashedPassword,
+		}
+		err = saveUser(ctx, execManager.Executor(), user)
+		assert.NoError(t, err)
+
+		requestBody, err := json.Marshal(fiber.Map{
+			"username": user.Username,
+			"password": password,
+		})
+		assert.NoError(t, err)
+
+		request, err := http.NewRequest(http.MethodPost, "/sign-in", bytes.NewBuffer(requestBody))
+		assert.NoError(t, err)
+
+		request.Header.Add("Content-Type", "application/json")
+
+		res, err := app.Test(request)
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, fiber.StatusOK, res.StatusCode)
+	})
+
+	t.Run("request body invalid", func(t *testing.T) {
+		requestBody, err := json.Marshal(fiber.Map{
+			"username": faker.Username(),
+			"password": faker.Password(),
+		})
+		assert.NoError(t, err)
+
+		request, err := http.NewRequest(http.MethodPost, "/sign-in", bytes.NewBuffer(requestBody))
+		assert.NoError(t, err)
+
+		request.Header.Add("Content-Type", "application/json")
+		res, err := app.Test(request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, fiber.StatusUnauthorized, res.StatusCode)
+	})
+
+	t.Run("username not exist", func(t *testing.T) {
+		requestBody, err := json.Marshal(fiber.Map{
+			"username": faker.Username(),
+			"password": "ncsdfnc&8_A1",
+		})
+		assert.NoError(t, err)
+
+		request, err := http.NewRequest(http.MethodPost, "/sign-in", bytes.NewBuffer(requestBody))
+		assert.NoError(t, err)
+
+		request.Header.Add("Content-Type", "application/json")
+		res, err := app.Test(request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, fiber.StatusUnauthorized, res.StatusCode)
+	})
+
+	t.Run("password mismatch", func(t *testing.T) {
+		ctx := context.Background()
+		password := "ncsdfnc&8_A1"
+		hashedPassword, err := passwordManager.Hash(password)
+		assert.NoError(t, err)
+		user := &entity.User{
+			ID:       uuid.New(),
+			Username: faker.Username(),
+			Password: hashedPassword,
+		}
+		err = saveUser(ctx, execManager.Executor(), user)
+		assert.NoError(t, err)
+
+		requestBody, err := json.Marshal(fiber.Map{
+			"username": user.Username,
+			"password": password + "1",
+		})
+		assert.NoError(t, err)
+
+		request, err := http.NewRequest(http.MethodPost, "/sign-in", bytes.NewBuffer(requestBody))
+		assert.NoError(t, err)
+
+		request.Header.Add("Content-Type", "application/json")
+
+		res, err := app.Test(request)
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, fiber.StatusUnauthorized, res.StatusCode)
 	})
 }

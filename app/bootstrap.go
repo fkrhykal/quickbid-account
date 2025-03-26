@@ -15,28 +15,39 @@ import (
 )
 
 type BootstrapConfig struct {
-	Fiber  fiber.Router
-	DB     *sql.DB
-	Logger *slog.Logger
+	Fiber      fiber.Router
+	DB         *sql.DB
+	Logger     *slog.Logger
+	Credential *credential.JwtCredentialManagerConfig
 }
 
 func Bootstrap(config *BootstrapConfig) {
 	execManager := db.NewSqlExecutorManager(config.DB)
 	passwordManager := credential.NewBcryptPasswordManager(config.Logger)
+	credentialManager := credential.NewJwtCredentialManager(config.Credential)
+	saveUser := persistence.PgSaveUser(config.Logger)
+	findByUsername := persistence.PgFindUserByUsername(config.Logger)
 
 	signUpService := service.SignUpService(
 		config.Logger,
 		validation.ValidateSignUpRequest,
 		execManager,
-		persistence.PgSaveUser(config.Logger),
-		persistence.PgFindUserByUsername(config.Logger),
+		saveUser, findByUsername,
+
 		passwordManager,
 	)
-
-	signUpHandler := handler.SignUpHandler(
+	signInService := service.SignInService(
 		config.Logger,
-		signUpService,
+		validation.ValidateSignInRequest,
+		execManager,
+		findByUsername,
+		passwordManager,
+		credentialManager,
 	)
 
+	signUpHandler := handler.SignUpHandler(config.Logger, signUpService)
+	signInHandler := handler.SignInHandler(config.Logger, signInService)
+
 	route.SignUpRoute(config.Fiber, signUpHandler)
+	route.SignInRoute(config.Fiber, signInHandler)
 }

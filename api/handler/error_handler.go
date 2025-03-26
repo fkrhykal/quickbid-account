@@ -26,18 +26,22 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 			return response.SendError(ctx, fiber.StatusBadRequest, valError.Detail)
 		}
 
-		if fiberError, ok := err.(*fiber.Error); ok {
-			log.WarnContext(ctx.UserContext(), "application error", slog.Any("error", fiberError))
-			return response.SendFiberError(ctx, fiberError)
-		}
-
 		if errors.Is(err, usecase.ErrUsernameAlreadyUsed) {
 			log.WarnContext(ctx.UserContext(), "application err", slog.Any("error", err))
 			return response.SendError(ctx, fiber.StatusConflict, err)
 		}
 
-		log.ErrorContext(ctx.UserContext(), "unexpected error", slog.Any("error", err))
+		if errors.Is(err, usecase.ErrAuthentication) {
+			log.WarnContext(ctx.UserContext(), "authentication error")
+			return response.SendFiberError(ctx, fiber.ErrUnauthorized)
+		}
 
+		if fiberError, ok := err.(*fiber.Error); ok {
+			log.WarnContext(ctx.UserContext(), "application error", slog.Any("error", fiberError))
+			return response.SendFiberError(ctx, fiberError)
+		}
+
+		log.ErrorContext(ctx.UserContext(), "unexpected error", slog.Any("error", err))
 		return response.SendFiberError(ctx, fiber.ErrInternalServerError)
 	}
 }
