@@ -48,7 +48,7 @@ func main() {
 		Credential: credentialConfig,
 	})
 
-	address := fmt.Sprintf(":%d", config.EnvInt("APP_PORT", 8000))
+	address := fmt.Sprintf("%s:%d", config.EnvString("APP_HOST", "localhost"), config.EnvInt("APP_PORT", 8000))
 
 	if err := fiber.Listen(address); err != nil {
 		log.Fatal(err)

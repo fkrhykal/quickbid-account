@@ -28,7 +28,7 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 
 		if errors.Is(err, usecase.ErrUsernameAlreadyUsed) {
 			log.WarnContext(ctx.UserContext(), "application err", slog.Any("error", err))
-			return response.SendError(ctx, fiber.StatusConflict, err)
+			return response.SendError(ctx, fiber.StatusConflict, err.Error())
 		}
 
 		if errors.Is(err, usecase.ErrAuthentication) {

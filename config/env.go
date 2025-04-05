@@ -26,6 +26,14 @@ func MustEnvString(key string) string {
 	return v
 }
 
+func EnvString(key string, defaultValue string) string {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	return v
+}
+
 func EnvInt(key string, defaultValue int) int {
 	v, ok := os.LookupEnv(key)
 	if !ok {

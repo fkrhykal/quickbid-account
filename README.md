@@ -28,7 +28,7 @@ Content-Type: application/json
 #### Success Response
 
 ```
-HTTP/1.1 201 Created
+HTTP/1.1 201 CREATED
 Content-Type: application/json
 ```
 
@@ -62,6 +62,65 @@ Username already used
 {
   "code": 409,
   "error": "username already used"
+}
+```
+
+##### `500 Internal Server Error`
+
+Unexpected server error
+
+```json
+{
+  "code": 500,
+  "error": "Internal Server Error"
+}
+```
+
+### Sign In
+
+Generate bearer token.
+
+#### Request
+
+```
+POST /api/v1/sign-in
+```
+
+```
+Content-Type: application/json
+```
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+#### Success Response
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
+
+```json
+{
+  "id": "string",
+  "bearerToken": "string"
+}
+```
+
+#### Error Response
+
+##### `401 Unauthorized`
+
+Incorrect username or password
+
+```json
+{
+  "code": 401,
+  "error": "string"
 }
 ```
 
