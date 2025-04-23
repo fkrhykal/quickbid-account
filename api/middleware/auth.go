@@ -7,6 +7,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func AuthenticationMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		_, ok := c.Locals("credential").(*credential.UserCredential)
+		if !ok {
+			return fiber.ErrUnauthorized
+		}
+		return c.Next()
+	}
+}
+
 func BearerMiddleware(credentialRetriever credential.UserCredentialRetriever) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authorization, ok := c.GetReqHeaders()["Authorization"]

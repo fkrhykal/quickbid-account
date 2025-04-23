@@ -6,4 +6,5 @@ type User struct {
 	ID       uuid.UUID
 	Username string
 	Password string
+	Avatar   *string
 }
