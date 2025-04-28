@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CurrentUserProfile(router fiber.Router, credentialRetriever credential.UserCredentialRetriever, getUserProfile usecase.GetUserProfile) {
+func SetupGetCurrentUserProfile(router fiber.Router, credentialRetriever credential.UserCredentialRetriever, getUserProfile usecase.GetUserProfile) {
 	router.Get("/users/_current",
 		middleware.BearerMiddleware(credentialRetriever),
 		middleware.AuthenticationMiddleware(),

@@ -28,10 +28,13 @@ func TestSaveUser(t *testing.T) {
 
 	saveUser := persistence.PgSaveUser(config.PostgresTestConfig.Logger)
 
+	avatar := faker.URL()
+
 	user := &entity.User{
 		ID:       uuid.New(),
 		Username: faker.Username(),
 		Password: faker.Password(),
+		Avatar:   &avatar,
 	}
 
 	err = saveUser(ctx, execManager.Executor(), user)
@@ -53,10 +56,13 @@ func TestFindUserByUsername(t *testing.T) {
 
 	saveUser := persistence.PgSaveUser(config.PostgresTestConfig.Logger)
 
+	avatar := faker.URL()
+
 	user := &entity.User{
 		ID:       uuid.New(),
 		Username: faker.Username(),
 		Password: faker.Password(),
+		Avatar:   &avatar,
 	}
 
 	err = saveUser(ctx, execManager.Executor(), user)

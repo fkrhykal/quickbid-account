@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/fkrhykal/quickbid-account/api/handler"
-	"github.com/fkrhykal/quickbid-account/api/route"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
 	"github.com/fkrhykal/quickbid-account/internal/credential"
@@ -27,13 +26,14 @@ func Bootstrap(config *BootstrapConfig) {
 	credentialManager := credential.NewJwtCredentialManager(config.Credential)
 	saveUser := persistence.PgSaveUser(config.Logger)
 	findByUsername := persistence.PgFindUserByUsername(config.Logger)
+	findByID := persistence.PgFindUserByID(config.Logger)
 
 	signUpService := service.SignUpService(
 		config.Logger,
 		validation.ValidateSignUpRequest,
 		execManager,
-		saveUser, findByUsername,
-
+		saveUser,
+		findByUsername,
 		passwordManager,
 	)
 	signInService := service.SignInService(
@@ -44,10 +44,9 @@ func Bootstrap(config *BootstrapConfig) {
 		passwordManager,
 		credentialManager,
 	)
+	userProfileService := service.UserProfileService(execManager, findByID)
 
-	signUpHandler := handler.SignUpHandler(config.Logger, signUpService)
-	signInHandler := handler.SignInHandler(config.Logger, signInService)
-
-	route.SignUpRoute(config.Fiber, signUpHandler)
-	route.SignInRoute(config.Fiber, signInHandler)
+	handler.SetupSignUp(config.Logger, config.Fiber, signUpService)
+	handler.SetupSignIn(config.Logger, config.Fiber, signInService)
+	handler.SetupGetCurrentUserProfile(config.Fiber, credentialManager, userProfileService)
 }

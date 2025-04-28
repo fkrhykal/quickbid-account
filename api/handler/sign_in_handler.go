@@ -9,8 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SignInHandler(log *slog.Logger, signIn usecase.SignIn) fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
+func SetupSignIn(log *slog.Logger, router fiber.Router, signIn usecase.SignIn) {
+	router.Post("/sign-in", func(ctx *fiber.Ctx) error {
 		userCtx := ctx.UserContext()
 		log.DebugContext(userCtx, "Handling user sign in")
 
@@ -30,5 +30,5 @@ func SignInHandler(log *slog.Logger, signIn usecase.SignIn) fiber.Handler {
 
 		log.DebugContext(userCtx, "User signed in successfully")
 		return response.SendData(ctx, fiber.StatusOK, res)
-	}
+	})
 }

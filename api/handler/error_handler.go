@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/fkrhykal/quickbid-account/api/response"
+	"github.com/fkrhykal/quickbid-account/internal/credential"
 	"github.com/fkrhykal/quickbid-account/internal/usecase"
 	"github.com/fkrhykal/quickbid-account/internal/validation"
 	"github.com/gofiber/fiber/v2"
@@ -33,6 +34,16 @@ func ErrorHandler(log *slog.Logger) fiber.ErrorHandler {
 
 		if errors.Is(err, usecase.ErrAuthentication) {
 			log.WarnContext(ctx.UserContext(), "authentication error")
+			return response.SendFiberError(ctx, fiber.ErrUnauthorized)
+		}
+
+		if errors.Is(err, credential.ErrCredentialExpired) {
+			log.WarnContext(ctx.UserContext(), "credential expired", slog.Any("error", err))
+			return response.SendFiberError(ctx, fiber.ErrUnauthorized)
+		}
+
+		if errors.Is(err, credential.ErrCredentialInvalid) {
+			log.WarnContext(ctx.UserContext(), "credential invalid", slog.Any("error", err))
 			return response.SendFiberError(ctx, fiber.ErrUnauthorized)
 		}
 

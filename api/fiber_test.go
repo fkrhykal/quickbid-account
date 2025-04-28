@@ -11,7 +11,6 @@ import (
 
 	"github.com/fkrhykal/quickbid-account/api"
 	"github.com/fkrhykal/quickbid-account/api/handler"
-	"github.com/fkrhykal/quickbid-account/api/route"
 	"github.com/fkrhykal/quickbid-account/config"
 	"github.com/fkrhykal/quickbid-account/db"
 	"github.com/fkrhykal/quickbid-account/db/persistence"
@@ -45,8 +44,9 @@ func TestSignUp(t *testing.T) {
 	findUserByUsername := persistence.PgFindUserByUsername(log)
 	passwordManager := credential.NewBcryptPasswordManager(log)
 
-	route.SignUpRoute(app, handler.SignUpHandler(
+	handler.SetupSignUp(
 		log,
+		app,
 		service.SignUpService(
 			log,
 			validation.ValidateSignUpRequest,
@@ -55,7 +55,7 @@ func TestSignUp(t *testing.T) {
 			findUserByUsername,
 			passwordManager,
 		),
-	))
+	)
 
 	t.Run("request success", func(t *testing.T) {
 		requestBody, err := json.Marshal(fiber.Map{
@@ -161,8 +161,9 @@ func TestSignIn(t *testing.T) {
 		SecretKey: []byte("test"),
 	})
 
-	route.SignInRoute(app, handler.SignInHandler(
+	handler.SetupSignIn(
 		log,
+		app,
 		service.SignInService(
 			log,
 			validation.ValidateSignInRequest,
@@ -171,7 +172,7 @@ func TestSignIn(t *testing.T) {
 			passwordManager,
 			credentialManager,
 		),
-	))
+	)
 
 	t.Run("sign in success", func(t *testing.T) {
 		ctx := context.Background()
